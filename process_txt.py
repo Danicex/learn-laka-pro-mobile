@@ -1,51 +1,62 @@
-"""
-1. extract text
-2. convert to tts save both book and chuncks
-3. get book
-4. get chunck
-"""
+# process_txt.py
 from pypdf import PdfReader
-from utiils.crud import add_book, get_all_books, add_pdf_chunk, get_book_chunks
-from utiils.convert_tts import tts
-
-
+from utils.crud import add_book, get_all_books, add_pdf_chunk, get_book_chunks
+from utils.convert_tts import tts
+import os
 def fetch_books():
     data = get_all_books()
     return data
-
 
 def fetch_book_chunck(id):
     data = get_book_chunks(id)
     return data
 
-
 def extract_text(file, audio_path):
     try:
         reader = PdfReader(file)
-
+        
         # extract text per page (keep pages separate, not joined into one string)
         pages_text = [page.extract_text() or "" for page in reader.pages]
-
-        # PdfReader has no .title attribute — use metadata, with a fallback
+        
+        # Get title from metadata, with a fallback
         title = (reader.metadata.title if reader.metadata else None) or "Untitled"
-
+        
+        # Clean title for filename
+        safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        
         # add new book to db
         book_id = add_book(title)
-
-        # for each page call the tts function passing that page's text
-        counter = 0
-        for page_text in pages_text:
+        print(f"📚 Added book: '{title}' (ID: {book_id})")
+        
+        # Process each page
+        chunk_counter = 0
+        for page_idx, page_text in enumerate(pages_text):
             if not page_text.strip():
-                counter += 1
-                continue  # skip empty pages (e.g. image-only pages)
+                continue  # skip empty pages
+            
+            try:
+                # Create a unique filename for each chunk
+                chunk_filename = f"{safe_title}_page_{page_idx + 1}"
+                chunk_audio_path = os.path.join(audio_path, chunk_filename)
+                
+                # Convert text to speech
+                audio_file = tts(page_text, chunk_audio_path)
+                print(f"✅ Processed page {page_idx + 1}: {audio_file}")
+                print(f"✅ page text {page_text}")
 
-            new_audio_path = f"{audio_path}/{title}_{counter}"
-            path = tts(page_text, new_audio_path)
-            add_pdf_chunk(book_id, page_text, path)
-            counter += 1
-
+                
+                # Save to database
+                add_pdf_chunk(book_id, page_text, audio_file)
+                chunk_counter += 1
+                
+            except Exception as e:
+                print(f"⚠️ Error processing page {page_idx + 1}: {e}")
+                # Continue with next page instead of failing completely
+                continue
+        
+        print(f"✅ Book processed successfully! {chunk_counter} chunks created.")
         return book_id
 
     except Exception as e:
-        print(f"Error processing PDF: {e}")
+        print(f"❌ Error processing PDF: {e}")
         raise
