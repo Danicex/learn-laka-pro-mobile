@@ -1,6 +1,0 @@
-piper-tts 
-pypdf
-reportlab
-numpy
-soundfile
-sounddevice
