@@ -8,10 +8,11 @@ try:
 except ImportError as e:
     print(f"ERROR: piper-tts package not installed or import failed: {e}")
     sys.exit(1)
-
-model_path = "/home/tegabytes/Documents/learn-laka-pro-mobile/utils/en_US-amy-low.onnx"
+TTS_MODEL =os.getenv("TTS_MODEL_PATH")
+AUDIO_PATH =os.getenv("AUDIO_PATH")
+model_path = TTS_MODEL
 config_path = model_path + ".json"  # piper needs this sitting next to the .onnx
-output_dir = "/home/tegabytes/Documents/learn-laka-pro-mobile/audio_files"
+output_dir = AUDIO_PATH
 
 # --- Load the model once, at import time (like code1 does) ---
 if not os.path.isfile(model_path):

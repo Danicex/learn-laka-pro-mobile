@@ -64,10 +64,12 @@ def extract_text(file, audio_path):
         print(f"❌ Error processing PDF: {e}")
         raise
     
+PDF_PATH =os.getenv("PDF_SAMPLE_PATH")
+AUDIO_PATH =os.getenv("AUDIO_PATH")
 
 if __name__ == "__main__":
-    # AUDIO_FOLDER = "/home/tegabytes/Documents/learn-laka-pro-mobile/audio_files"
-    # PDF_SAMPLE = "/home/tegabytes/Documents/learn-laka-pro-mobile/designing_data_intensive.pdf"
+    AUDIO_FOLDER =AUDIO_PATH
+    PDF_SAMPLE =PDF_PATH
     # extract_text(PDF_SAMPLE, AUDIO_FOLDER)
     fetch_books()
     fetch_book_chunck(1)
